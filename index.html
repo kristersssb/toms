@@ -1,69 +1,212 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Sorting Game</title>
     <style>
-        /* CSS: Make it look nice */
-        body { font-family: sans-serif; text-align: center; }
-        
-        .container {
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: white;
+            padding: 20px;
+        }
+
+        h1 { margin-bottom: 10px; }
+        p { color: #aaa; margin-bottom: 30px; }
+
+        /* Area where images start (Scrambled) */
+        #image-bank {
+            min-height: 120px;
+            background-color: #333;
+            border: 2px dashed #555;
+            padding: 10px;
             display: flex;
             justify-content: center;
-            gap: 50px;
-            margin-top: 50px;
-        }
-
-        /* The Box where images live */
-        #box1, #box2 {
-            width: 300px;
-            height: 300px;
-            border: 2px dashed #333;
-            background-color: #f0f0f0;
-            display: flex;
             flex-wrap: wrap;
-            padding: 10px;
+            gap: 10px;
+            margin-bottom: 40px;
+            border-radius: 10px;
         }
 
-        /* The Draggable Image */
-        img {
-            width: 80px;
-            height: 80px;
+        /* Container for the 7 empty slots */
+        #slots-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        /* The individual slots (boxes) */
+        .slot {
+            width: 100px;
+            height: 100px;
+            background-color: #444;
+            border: 2px solid #666;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* The Draggable Images */
+        .draggable-img {
+            width: 90px;
+            height: 90px;
             cursor: grab;
-            margin: 5px;
+            border-radius: 5px;
+            transition: transform 0.1s;
+        }
+        
+        .draggable-img:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        /* Buttons */
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        button:hover { background-color: #218838; }
+
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            height: 40px;
         }
     </style>
 </head>
 <body>
 
-    <h2>Drag the images between the boxes!</h2>
+    <h1>Sort the 7 Images</h1>
+    <p>Drag the images from the top box into the empty slots below in the correct order (1 to 7).</p>
 
-    <div class="container">
-        <!-- BOX 1 -->
-        <div id="box1" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <!-- Images inside Box 1 -->
-            <img src="https://placehold.co/100/png?text=A" draggable="true" ondragstart="drag(event)" id="img1">
-            <img src="https://placehold.co/100/png?text=B" draggable="true" ondragstart="drag(event)" id="img2">
-        </div>
-
-        <!-- BOX 2 -->
-        <div id="box2" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <!-- Empty initially -->
-        </div>
+    <!-- 1. The Bank: Images appear here scrambled -->
+    <div id="image-bank" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <!-- Javascript will insert images here -->
     </div>
 
+    <!-- 2. The Slots: Where you drop them -->
+    <div id="slots-container">
+        <!-- We create 7 slots explicitly -->
+        <div class="slot" id="slot-1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        <div class="slot" id="slot-2" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        <div class="slot" id="slot-3" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        <div class="slot" id="slot-4" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        <div class="slot" id="slot-5" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        <div class="slot" id="slot-6" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        <div class="slot" id="slot-7" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    </div>
+
+    <button onclick="checkOrder()">Check Order</button>
+    
+    <div id="result"></div>
+
     <script>
-        // JAVASCRIPT: The logic
+        // --- CONFIGURATION ---
+        // You can replace these Placeholders with your own image URLs!
+        // The "id" must stay "img-1", "img-2" etc. so the code knows the correct order.
+        const images = [
+            { id: "img-1", src: "https://placehold.co/100x100/FF5733/FFF?text=1" },
+            { id: "img-2", src: "https://placehold.co/100x100/C70039/FFF?text=2" },
+            { id: "img-3", src: "https://placehold.co/100x100/900C3F/FFF?text=3" },
+            { id: "img-4", src: "https://placehold.co/100x100/581845/FFF?text=4" },
+            { id: "img-5", src: "https://placehold.co/100x100/1C2833/FFF?text=5" },
+            { id: "img-6", src: "https://placehold.co/100x100/17202A/FFF?text=6" },
+            { id: "img-7", src: "https://placehold.co/100x100/2874A6/FFF?text=7" }
+        ];
+
+        // --- SETUP ON LOAD ---
+        const bank = document.getElementById("image-bank");
+
+        // 1. Shuffle the images so the game is hard
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        // 2. Create the HTML for the images and put them in the bank
+        const shuffledImages = shuffle([...images]); // Create a copy to shuffle
+        
+        shuffledImages.forEach(imgData => {
+            const img = document.createElement("img");
+            img.src = imgData.src;
+            img.id = imgData.id;
+            img.className = "draggable-img";
+            img.draggable = true;
+            img.ondragstart = drag;
+            bank.appendChild(img);
+        });
+
+        // --- DRAG AND DROP FUNCTIONS ---
         function allowDrop(ev) {
-            ev.preventDefault(); // Allows an item to be dropped here
+            ev.preventDefault();
         }
 
         function drag(ev) {
-            ev.dataTransfer.setData("text", ev.target.id); // Remember which image is being dragged
+            ev.dataTransfer.setData("text", ev.target.id);
         }
 
         function drop(ev) {
             ev.preventDefault();
-            var data = ev.dataTransfer.getData("text"); // Get the image ID
-            ev.target.appendChild(document.getElementById(data)); // Move the image to the new box
+            var data = ev.dataTransfer.getData("text");
+            var draggedElement = document.getElementById(data);
+            
+            // Logic: Only allow one image per slot (unless dropping back to bank)
+            // If the target is a slot or the bank, allow drop.
+            // If the target is an IMAGE inside a slot, drop into the parent (the slot).
+            
+            let target = ev.target;
+
+            // If we dropped ON TOP of another image, find the parent slot
+            if (target.tagName === "IMG") {
+                target = target.parentElement;
+            }
+
+            // If the target is a Slot and already has an image, swap them? 
+            // For simplicity: We only append. If slot is full, it might look weird unless we check.
+            // Simple fix: If target is a slot and has children, move the existing child back to bank first?
+            // Let's keep it simple: Just append. 
+            target.appendChild(draggedElement);
+        }
+
+        // --- GAME LOGIC ---
+        function checkOrder() {
+            let correctCount = 0;
+            const resultText = document.getElementById("result");
+
+            // Loop through slots 1 to 7
+            for (let i = 1; i <= 7; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                const img = slot.querySelector("img");
+
+                // Check if there is an image and if its ID matches the slot number
+                if (img && img.id === `img-${i}`) {
+                    correctCount++;
+                    slot.style.borderColor = "#00FF00"; // Green border for correct
+                } else {
+                    slot.style.borderColor = "#FF0000"; // Red border for wrong/empty
+                }
+            }
+
+            // Feedback Message
+            if (correctCount === 7) {
+                resultText.innerHTML = "🎉 YOU WIN! All 7 correct! 🎉";
+                resultText.style.color = "#00FF00";
+            } else {
+                resultText.innerHTML = `You have ${correctCount} correct. Keep trying!`;
+                resultText.style.color = "#FFA500";
+            }
         }
     </script>
 
