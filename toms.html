@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        /* CSS: Make it look nice */
+        body { font-family: sans-serif; text-align: center; }
+        
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 50px;
+        }
+
+        /* The Box where images live */
+        #box1, #box2 {
+            width: 300px;
+            height: 300px;
+            border: 2px dashed #333;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-wrap: wrap;
+            padding: 10px;
+        }
+
+        /* The Draggable Image */
+        img {
+            width: 80px;
+            height: 80px;
+            cursor: grab;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Drag the images between the boxes!</h2>
+
+    <div class="container">
+        <!-- BOX 1 -->
+        <div id="box1" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <!-- Images inside Box 1 -->
+            <img src="https://placehold.co/100/png?text=A" draggable="true" ondragstart="drag(event)" id="img1">
+            <img src="https://placehold.co/100/png?text=B" draggable="true" ondragstart="drag(event)" id="img2">
+        </div>
+
+        <!-- BOX 2 -->
+        <div id="box2" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <!-- Empty initially -->
+        </div>
+    </div>
+
+    <script>
+        // JAVASCRIPT: The logic
+        function allowDrop(ev) {
+            ev.preventDefault(); // Allows an item to be dropped here
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id); // Remember which image is being dragged
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text"); // Get the image ID
+            ev.target.appendChild(document.getElementById(data)); // Move the image to the new box
+        }
+    </script>
+
+</body>
+</html>
